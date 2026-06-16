@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.vsix
+.vscode-test/
+*.log
+.DS_Store
+
+# Generated webview bundles — CI rebuilds these via `npm run build` before packaging.
+media/webview/*.js
+media/webview/*.js.map

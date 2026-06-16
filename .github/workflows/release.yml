@@ -1,0 +1,135 @@
+name: release
+
+# Publishes the DevSpec VS Code extension on every v*.*.* tag.
+#
+# One-time setup (per repo) — the workflow stays dormant until step 2 is done:
+#   1. Create a Marketplace publisher at https://marketplace.visualstudio.com/manage
+#      and set `publisher` in package.json to that id (it is currently the
+#      placeholder "devspec-local", which CANNOT publish).
+#   2. Create an Azure DevOps Personal Access Token with the
+#      Marketplace → Manage scope, then add it as a repo secret named VSCE_PAT
+#      (Settings → Secrets and variables → Actions → New repository secret).
+#   3. (Optional) To also publish to Open VSX (for Cursor/VSCodium/etc.), create
+#      a token at https://open-vsx.org/user-settings/tokens and add it as
+#      OVSX_PAT. Without it, the Open VSX step is skipped automatically.
+#   4. (Optional) Create a GitHub Environment called `marketplace`
+#      (Settings → Environments) and require reviewer approval before each
+#      publish — sensible while the extension is pre-1.0.
+#
+# Cutting a release (the normal flow):
+#   - Bump `version` in package.json and add a `## v<x.y.z>` section to CHANGELOG.md
+#   - git commit, then: git tag v<x.y.z> && git push --follow-tags
+#   - This workflow verifies, publishes, and creates the GitHub Release.
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+concurrency:
+  # Never cancel an in-flight publish.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify (typecheck + test + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Verify package.json version matches the tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"   # v0.1.0 → 0.1.0
+          pkg=$(node -p "require('./package.json').version")
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::Tag is v$tag but package.json says $pkg — bump package.json first or recreate the tag."
+            exit 1
+          fi
+          echo "✓ package.json version $pkg matches tag v$tag"
+      - name: Verify a real publisher is configured
+        shell: bash
+        run: |
+          set -euo pipefail
+          pub=$(node -p "require('./package.json').publisher")
+          if [ "$pub" = "devspec-local" ] || [ -z "$pub" ]; then
+            echo "::error::package.json publisher is still the placeholder '$pub'. Create a Marketplace publisher and set it before releasing (see release.yml header)."
+            exit 1
+          fi
+          echo "✓ publisher is $pub"
+
+  publish:
+    name: publish to Marketplace
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: marketplace
+    permissions:
+      contents: write   # to create the GitHub Release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+
+      - name: Package the extension (.vsix)
+        run: npx --no-install vsce package --no-dependencies --out devspec.vsix
+
+      - name: Publish to VS Code Marketplace
+        run: npx --no-install vsce publish --no-dependencies --packagePath devspec.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX (if OVSX_PAT is set)
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          set -euo pipefail
+          if [ -z "${OVSX_PAT:-}" ]; then
+            echo "::notice title=Open VSX::OVSX_PAT not set — skipping Open VSX publish."
+            exit 0
+          fi
+          npx ovsx publish devspec.vsix -p "$OVSX_PAT"
+
+      - name: Extract changelog entry for this tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          if [ -f CHANGELOG.md ]; then
+            # Capture lines from `## <tag>` up to (but not including) the next `## `
+            awk -v tag="## ${tag}" '
+              $0 ~ "^## " {if (in_section) exit; if ($0 ~ "^"tag) {in_section=1; next}}
+              in_section {print}
+            ' CHANGELOG.md > release_notes.md
+          fi
+          if [ ! -s release_notes.md ]; then
+            echo "_See auto-generated notes below._" > release_notes.md
+          fi
+          echo "--- release_notes.md ---"
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body_path: release_notes.md
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: devspec.vsix

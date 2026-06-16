@@ -1,0 +1,19 @@
+.vscode/**
+.vscode-test/**
+src/**
+test/**
+.github/**
+openspec/**
+.claude/**
+.gitignore
+.eslintrc.json
+esbuild.mjs
+tsconfig.json
+vitest.config.ts
+CONTRIBUTING.md
+*.vsix
+node_modules/**
+
+# Include the bundled webview asset, but never ship source maps.
+# Order matters: keep these AFTER any `media/**` allow rules.
+**/*.map

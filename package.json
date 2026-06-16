@@ -1,0 +1,422 @@
+{
+  "name": "vscode-devspec",
+  "displayName": "DevSpec",
+  "description": "Spec-driven engineering for AI-collaborated code — sidebar, status, coherence diagnostics, and live workspace maps inside VS Code.",
+  "version": "0.1.0",
+  "publisher": "devspec-local",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bleached123/vscode-devspec.git"
+  },
+  "engines": {
+    "vscode": "^1.120.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "devspec",
+    "spec-driven",
+    "ai",
+    "agents",
+    "coherence"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "devspec",
+          "title": "DevSpec",
+          "icon": "media/devspec.svg"
+        }
+      ]
+    },
+    "views": {
+      "devspec": [
+        {
+          "id": "devspec.changes",
+          "name": "Changes",
+          "icon": "media/devspec.svg",
+          "contextualTitle": "DevSpec changes"
+        },
+        {
+          "id": "devspec.capabilities",
+          "name": "Capabilities",
+          "type": "tree"
+        },
+        {
+          "id": "devspec.phase",
+          "name": "Phase & gates",
+          "type": "tree"
+        },
+        {
+          "id": "devspec.activity",
+          "name": "Agent activity",
+          "type": "tree"
+        },
+        {
+          "id": "devspec.orb",
+          "name": "Claude orb",
+          "type": "webview"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "devspec.changes",
+        "contents": "**No active changes yet.**\n\nFastest path: open Claude Code and run **`/devspec:onboard`** — it grills you through planning your first change.\n\n[Copy /devspec:onboard to clipboard](command:devspec.copyOnboard)\n\nOr scaffold one manually via the CLI:\n\n[Run devspec init…](command:devspec.init)\n[Show CLI status](command:devspec.showLog)\n\nIf this folder *does* contain a `.devspec/devspec.yaml` with changes, the extension hasn't loaded the workspace yet. Check the **DevSpec** Output channel (View → Output → DevSpec) for details."
+      },
+      {
+        "view": "devspec.capabilities",
+        "contents": "**No capabilities defined yet.**\n\nCapabilities are living specs of what the system promises (e.g. `user-auth`, `billing`). Each lives at `.devspec/specs/<name>/spec.md` and is edited by per-change deltas.\n\n[Initialise capability…](command:devspec.initCapability)\n[Copy /devspec:explore](command:devspec.copyExplore)\n\nOnce a capability exists, this view lists requirements and any changes with pending deltas. Sync deltas via **`/devspec:sync <slug>`**."
+      },
+      {
+        "view": "devspec.phase",
+        "contents": "Waiting for workspace…\n\nOpen a folder containing `.devspec/devspec.yaml` to populate this view.\n\n[Show CLI status](command:devspec.showLog)"
+      },
+      {
+        "view": "devspec.activity",
+        "contents": "No agent activity yet.\n\nOnce you (or the Ralph loop) log decisions via `devspec log`, the most recent entries from each active change's `alignment.md` appear here.\n\n[Copy /devspec:iterate to clipboard](command:devspec.copyIterate)"
+      }
+    ],
+    "commands": [
+      {
+        "command": "devspec.refresh",
+        "title": "DevSpec: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "devspec.plan",
+        "title": "DevSpec: Plan change…",
+        "icon": "$(add)"
+      },
+      {
+        "command": "devspec.coherence",
+        "title": "DevSpec: Coherence check (active change)",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "devspec.openMap",
+        "title": "DevSpec: Open map (workspace overview)",
+        "icon": "$(map)"
+      },
+      {
+        "command": "devspec.openWebviewMap",
+        "title": "DevSpec: Open interactive map…",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "devspec.init",
+        "title": "DevSpec: Initialize workspace…",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "devspec.openChange",
+        "title": "DevSpec: Open change docs"
+      },
+      {
+        "command": "devspec.showLog",
+        "title": "DevSpec: Show extension log"
+      },
+      {
+        "command": "devspec.regenerateClaudeMd",
+        "title": "DevSpec: Regenerate CLAUDE.md",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "devspec.copySlashCommand",
+        "title": "DevSpec: Copy slash command to clipboard"
+      },
+      {
+        "command": "devspec.copyIterate",
+        "title": "DevSpec: Copy /devspec:iterate for this change",
+        "icon": "$(robot)"
+      },
+      {
+        "command": "devspec.copyReview",
+        "title": "DevSpec: Copy /devspec:review for this change",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "devspec.copyCoordinate",
+        "title": "DevSpec: Copy /devspec:coordinate (cross-change)"
+      },
+      {
+        "command": "devspec.copyIterateAll",
+        "title": "DevSpec: Copy /devspec:iterate-all (rotation)"
+      },
+      {
+        "command": "devspec.copyOnboard",
+        "title": "DevSpec: Copy /devspec:onboard (plan first change interactively)",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "devspec.copySync",
+        "title": "DevSpec: Copy /devspec:sync (sync capability deltas)",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "devspec.copyExplore",
+        "title": "DevSpec: Copy /devspec:explore (thinking partner)",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "devspec.initCapability",
+        "title": "DevSpec: Initialise capability…",
+        "icon": "$(symbol-class)"
+      },
+      {
+        "command": "devspec.showContributingChanges",
+        "title": "DevSpec: Show contributing changes"
+      },
+      {
+        "command": "devspec.openBoard",
+        "title": "DevSpec: Open board (kanban — drag to advance/rewind)",
+        "icon": "$(layout)"
+      },
+      {
+        "command": "devspec.next",
+        "title": "DevSpec: Next task",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "devspec.logDecision",
+        "title": "DevSpec: Log decision…",
+        "icon": "$(note)"
+      },
+      {
+        "command": "devspec.completeTaskAtLine",
+        "title": "DevSpec: Mark task complete (internal)"
+      },
+      {
+        "command": "devspec.copyNew",
+        "title": "DevSpec: Copy /devspec:new"
+      },
+      {
+        "command": "devspec.copyContinue",
+        "title": "DevSpec: Copy /devspec:continue for this change"
+      },
+      {
+        "command": "devspec.copyVerify",
+        "title": "DevSpec: Copy /devspec:verify for this change"
+      },
+      {
+        "command": "devspec.copyArchive",
+        "title": "DevSpec: Copy /devspec:archive for this change"
+      },
+      {
+        "command": "devspec.copyGrill",
+        "title": "DevSpec: Copy /devspec:grill (with stage from active editor)"
+      },
+      {
+        "command": "devspec.copyTriage",
+        "title": "DevSpec: Copy /devspec:triage"
+      },
+      {
+        "command": "devspec.copyUatDesign",
+        "title": "DevSpec: Copy /devspec:uat-design"
+      },
+      {
+        "command": "devspec.copyRefreshStandards",
+        "title": "DevSpec: Copy /devspec:refresh-standards"
+      },
+      {
+        "command": "devspec.openOrb",
+        "title": "DevSpec: Open Claude orb",
+        "icon": "$(circle-large-filled)"
+      },
+      {
+        "command": "devspec.voiceMute",
+        "title": "DevSpec: Toggle Claude voice (mute/unmute)",
+        "icon": "$(mute)"
+      },
+      {
+        "command": "devspec.voiceStop",
+        "title": "DevSpec: Stop speaking",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "devspec.voiceSkipLatest",
+        "title": "DevSpec: Skip to latest message",
+        "icon": "$(debug-step-over)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "devspec.plan",
+          "when": "view == devspec.changes",
+          "group": "navigation@1"
+        },
+        {
+          "command": "devspec.refresh",
+          "when": "view == devspec.changes",
+          "group": "navigation@2"
+        },
+        {
+          "command": "devspec.openBoard",
+          "when": "view == devspec.changes",
+          "group": "navigation@3"
+        },
+        {
+          "command": "devspec.openMap",
+          "when": "view == devspec.changes",
+          "group": "navigation@4"
+        },
+        {
+          "command": "devspec.voiceMute",
+          "when": "view == devspec.orb",
+          "group": "navigation@1"
+        },
+        {
+          "command": "devspec.voiceSkipLatest",
+          "when": "view == devspec.orb",
+          "group": "navigation@2"
+        },
+        {
+          "command": "devspec.voiceStop",
+          "when": "view == devspec.orb",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "devspec.coherence",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "inline"
+        },
+        {
+          "command": "devspec.copyIterate",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "agent@1"
+        },
+        {
+          "command": "devspec.copyReview",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "agent@2"
+        },
+        {
+          "command": "devspec.copyIterateAll",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "agent@3"
+        },
+        {
+          "command": "devspec.copyCoordinate",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "agent@4"
+        },
+        {
+          "command": "devspec.copySync",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "agent@5"
+        },
+        {
+          "command": "devspec.copyContinue",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "agent@6"
+        },
+        {
+          "command": "devspec.copyVerify",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "agent@7"
+        },
+        {
+          "command": "devspec.copyArchive",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "agent@8"
+        },
+        {
+          "command": "devspec.next",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "lifecycle@1"
+        },
+        {
+          "command": "devspec.logDecision",
+          "when": "view == devspec.changes && viewItem == change",
+          "group": "lifecycle@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "devspec.openChange",
+          "when": "false"
+        },
+        {
+          "command": "devspec.copySlashCommand",
+          "when": "false"
+        },
+        {
+          "command": "devspec.showContributingChanges",
+          "when": "false"
+        },
+        {
+          "command": "devspec.completeTaskAtLine",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DevSpec",
+      "properties": {
+        "devspec.cliPath": {
+          "type": "string",
+          "default": "devspec",
+          "description": "Path to the devspec CLI binary. Default 'devspec' resolves via PATH."
+        },
+        "devspec.coherenceOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run coherence checks when files in .devspec/projects/ are saved, and surface findings in the Problems panel."
+        },
+        "devspec.codeLens.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show CodeLens summaries above test fences and API methods in contract.md, and above task checkboxes in tasks.md."
+        },
+        "devspec.voice.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Speak Claude's new responses aloud in the Claude orb view. Off by default; reads the active Claude Code session transcript locally."
+        },
+        "devspec.voice.rate": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0.5,
+          "maximum": 2,
+          "description": "Speech rate for the Claude orb voice (1 = normal)."
+        },
+        "devspec.voice.voiceURI": {
+          "type": "string",
+          "default": "",
+          "description": "Preferred Web Speech voiceURI for the Claude orb. Leave empty to use the system default voice."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "package": "vsce package --no-dependencies",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "@types/vscode": "^1.120.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "marked": "^18.0.3",
+    "mermaid": "^11.15.0"
+  }
+}
