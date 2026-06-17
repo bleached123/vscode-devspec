@@ -74,7 +74,7 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     environment:
-      name: marketplace
+      name: dev
     permissions:
       contents: write   # to create the GitHub Release
     steps:
