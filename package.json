@@ -3,7 +3,7 @@
   "displayName": "DevSpec",
   "description": "Spec-driven engineering for AI-collaborated code — sidebar, status, coherence diagnostics, and live workspace maps inside VS Code.",
   "version": "0.1.0",
-  "publisher": "joshuapboothroyd",
+  "publisher": "JoshuaPeterBoothroyd",
   "license": "MIT",
   "repository": {
     "type": "git",
